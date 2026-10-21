@@ -1,0 +1,14 @@
+[Unit]
+Description=logi-osd: avisos na tela para dispositivos Logitech
+PartOf=graphical-session.target
+After=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+ExecStart=@bindir@/logi-osd
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=graphical-session.target

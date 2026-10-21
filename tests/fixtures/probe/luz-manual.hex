@@ -1,0 +1,79 @@
+# cenario: luz-manual
+# prompt: AGORA: luz + 3 vezes, depois luz - 3 vezes (repare se a luz muda)
+# duracao_s: 25
+# inicio: 2026-10-21 10:31:16
+# feature 0x00 = 0x0000 (dev 1, c537)
+# feature 0x01 = 0x0001 (dev 1, c537)
+# feature 0x02 = 0x0003 (dev 1, c537)
+# feature 0x03 = 0x0005 (dev 1, c537)
+# feature 0x04 = 0x00c0 (dev 1, c537)
+# feature 0x05 = 0x1000 (dev 1, c537)
+# feature 0x06 = 0x1d4b (dev 1, c537)
+# feature 0x07 = 0x1df3 (dev 1, c537)
+# feature 0x08 = 0x1e00 (dev 1, c537)
+# feature 0x09 = 0x1e80 (dev 1, c537)
+# feature 0x0a = 0x1f03 (dev 1, c537)
+# feature 0x0b = 0x2100 (dev 1, c537)
+# feature 0x0c = 0x2200 (dev 1, c537)
+# feature 0x0d = 0x2201 (dev 1, c537)
+# feature 0x0e = 0x8080 (dev 1, c537)
+# feature 0x0f = 0x8060 (dev 1, c537)
+# feature 0x10 = 0x8070 (dev 1, c537)
+# feature 0x11 = 0x1810 (dev 1, c537)
+# feature 0x12 = 0x1830 (dev 1, c537)
+# feature 0x13 = 0x1850 (dev 1, c537)
+# feature 0x14 = 0x1860 (dev 1, c537)
+# feature 0x15 = 0x1890 (dev 1, c537)
+# feature 0x16 = 0x18a0 (dev 1, c537)
+# feature 0x00 = 0x0000 (dev 1, c548)
+# feature 0x01 = 0x0001 (dev 1, c548)
+# feature 0x02 = 0x0003 (dev 1, c548)
+# feature 0x03 = 0x0005 (dev 1, c548)
+# feature 0x04 = 0x1d4b (dev 1, c548)
+# feature 0x05 = 0x0020 (dev 1, c548)
+# feature 0x06 = 0x0007 (dev 1, c548)
+# feature 0x07 = 0x1004 (dev 1, c548)
+# feature 0x08 = 0x1b04 (dev 1, c548)
+# feature 0x09 = 0x1814 (dev 1, c548)
+# feature 0x0a = 0x1815 (dev 1, c548)
+# feature 0x0b = 0x1982 (dev 1, c548)
+# feature 0x0c = 0x40a3 (dev 1, c548)
+# feature 0x0d = 0x4220 (dev 1, c548)
+# feature 0x0e = 0x4521 (dev 1, c548)
+# feature 0x0f = 0x4531 (dev 1, c548)
+# feature 0x10 = 0x00c3 (dev 1, c548)
+# feature 0x11 = 0x1802 (dev 1, c548)
+# feature 0x12 = 0x1803 (dev 1, c548)
+# feature 0x13 = 0x1806 (dev 1, c548)
+# feature 0x14 = 0x1816 (dev 1, c548)
+# feature 0x15 = 0x1805 (dev 1, c548)
+# feature 0x16 = 0x1830 (dev 1, c548)
+# feature 0x17 = 0x1891 (dev 1, c548)
+# feature 0x18 = 0x18a1 (dev 1, c548)
+# feature 0x19 = 0x1e00 (dev 1, c548)
+# feature 0x1a = 0x1e02 (dev 1, c548)
+# feature 0x1b = 0x1602 (dev 1, c548)
+# feature 0x1c = 0x1eb0 (dev 1, c548)
+# feature 0x1d = 0x1861 (dev 1, c548)
+# feature 0x1e = 0x1a20 (dev 1, c548)
+# feature 0x1f = 0x18b0 (dev 1, c548)
+# no c537 = /dev/hidraw3 0003:0000046D:0000C537 logitech-djreceiver
+# no c548 = /dev/hidraw7 0003:0000046D:0000C548 hid-generic
+  2198 c548 11 01 0b 00 08 03 04 00 00 00 00 00 00 00 00 00 00 00 00 00
+  2925 c548 11 01 0b 00 08 04 04 00 00 00 00 00 00 00 00 00 00 00 00 00
+  3698 c548 11 01 0b 00 08 05 04 00 00 00 00 00 00 00 00 00 00 00 00 00
+# ignorado (len 5): 5461 c537 80 01 00 80 00
+# ignorado (len 5): 5557 c537 80 00 00 80 00
+# ignorado (len 5): 16611 c537 80 01 00 80 00
+# ignorado (len 5): 16722 c537 80 00 00 80 00
+# ignorado (len 5): 19769 c537 80 01 00 80 00
+# ignorado (len 5): 19864 c537 80 00 00 80 00
+# ignorado (len 5): 20927 c537 80 01 00 80 00
+# ignorado (len 5): 21038 c537 80 00 00 80 00
+# ignorado (len 5): 21832 c537 80 01 00 80 00
+# ignorado (len 5): 21911 c537 80 00 00 80 00
+# ignorado (len 5): 23078 c537 80 01 00 80 00
+# ignorado (len 5): 23189 c537 80 00 00 80 00
+# ignorado (len 5): 24482 c537 80 01 00 80 00
+# ignorado (len 5): 24610 c537 80 00 00 80 00
+# fim: 3 frames

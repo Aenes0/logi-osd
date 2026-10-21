@@ -1,0 +1,8 @@
+/dev/hidraw0   HID_ID=0003:00002DC8:0000301C   DRIVER=hid-generic            HID++=-/- -> vendor != 046d  (8BitDo IDLE)
+/dev/hidraw1   HID_ID=0003:00000B05:00001939   DRIVER=hid-generic            HID++=-/- -> vendor != 046d  (AsusTek Computer Inc. AURA LED Controller)
+/dev/hidraw2   HID_ID=0003:0000046D:0000C537   DRIVER=logitech-djreceiver    HID++=-/- -> sem HID++ no descritor  (Logitech USB Receiver)
+/dev/hidraw3   HID_ID=0003:0000046D:0000C537   DRIVER=logitech-djreceiver    HID++=curto/longo -> SELECIONADO  (Logitech USB Receiver)
+/dev/hidraw4   HID_ID=0003:0000046D:0000402C   DRIVER=logitech-hidpp-device  HID++=curto/longo -> filho DJ, ignorado  (Logitech G602)
+/dev/hidraw5   HID_ID=0003:0000046D:0000C548   DRIVER=hid-generic            HID++=-/- -> sem HID++ no descritor  (Logitech USB Receiver)
+/dev/hidraw6   HID_ID=0003:0000046D:0000C548   DRIVER=hid-generic            HID++=-/- -> sem HID++ no descritor  (Logitech USB Receiver)
+/dev/hidraw7   HID_ID=0003:0000046D:0000C548   DRIVER=hid-generic            HID++=curto/longo -> SELECIONADO  (Logitech USB Receiver)

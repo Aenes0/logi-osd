@@ -1,0 +1,9 @@
+# logi-osd: acesso do usuário logado aos dispositivos HID++ da Logitech (hidraw).
+# Equivalente à regra do Solaar, sem a parte de uinput, que o logi-osd não usa.
+# Instalado por install.sh em /etc/udev/rules.d/70-logi-osd.rules.
+
+# Receptores e dispositivos USB
+ACTION!="remove", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", TAG+="uaccess"
+
+# Dispositivos conectados por Bluetooth
+ACTION!="remove", SUBSYSTEM=="hidraw", KERNELS=="0005:046D:*", TAG+="uaccess"

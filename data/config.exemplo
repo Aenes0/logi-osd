@@ -1,0 +1,33 @@
+# Configuração do logi-osd. Copie para $XDG_CONFIG_HOME/logi-osd/config e edite
+# (sem XDG_CONFIG_HOME definido, o caminho é ~/.config/logi-osd/config).
+# Formato: chave = valor, uma por linha. Linhas com # são comentários.
+# Todas as linhas abaixo estão comentadas: os valores mostrados são os padrões.
+# Sem o arquivo, ou com alguma chave ausente, valem os padrões.
+# Alterações exigem reiniciar o serviço: systemctl --user restart logi-osd
+
+# Bateria baixa (%). Faixa: 1 a 99. Mostra o aviso laranja.
+# bateria_baixa = 15
+
+# Bateria crítica (%). Faixa: 1 a 99. Precisa ser menor que bateria_baixa;
+# se não for, o valor é descartado e vale o padrão. Mostra o aviso vermelho.
+# bateria_critica = 5
+
+# Tempo que o aviso fica na tela, em milissegundos. Faixa: 200 a 20000.
+# duracao_ms = 1500
+
+# Tempo do aviso de bateria crítica, em milissegundos. Faixa: 200 a 20000.
+# duracao_critica_ms = 4000
+
+# Intervalo de leitura da bateria, em minutos, para dispositivos que não avisam sozinhos
+# (o G602, por exemplo). Faixa: 1 a 1440.
+# intervalo_bateria_min = 15
+
+# Comando executado quando a tecla Emoji é pressionada. Vazio = a tecla não faz nada.
+# O seletor de emoji é um projeto separado; enquanto ele não existir, deixe vazio.
+# Exemplo: comando_emoji = gnome-characters
+# comando_emoji =
+
+# Arquivo de fonte (.ttf) usado no texto do aviso. Vazio = fonte do sistema
+# (OpenSans ou DejaVuSans em /usr/share/fonts).
+# Exemplo: fonte = /usr/share/fonts/TTF/DejaVuSans.ttf
+# fonte =

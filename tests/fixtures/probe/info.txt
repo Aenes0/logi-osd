@@ -1,0 +1,200 @@
+# info gerado em 2026-10-21 10:00:26
+=== receptor c537 (/dev/hidraw3, Logitech USB Receiver)
+receptor_flags_antes_c537 = ok 00 09 00
+  WIRELESS=sim SOFTWARE_PRESENT=sim
+receptor_flags_depois_c537 = (sem escrita, igual)
+gatilho reg 0x02 = ok 00 00 00
+0x41 dev=1 protocolo=0x07 p0=0x12 wpid=0x402c link=sim [10 01 41 07 12 2c 40]
+--- dispositivo c537 dev 0x01
+ping = 2.0 (latencia 9 ms)
+feature 0x0001 FEATURE_SET: indice=0x01 tipo=0x00 versao=0
+feature 0x0005 DEVICE_NAME: indice=0x03 tipo=0x00 versao=0
+feature 0x1000 BATTERY_STATUS: indice=0x05 tipo=0x00 versao=0
+feature 0x1004 UNIFIED_BATTERY: ausente (ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00)
+feature 0x1814 CHANGE_HOST: ausente (ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00)
+feature 0x1815 HOSTS_INFO: ausente (ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00)
+feature 0x1982 BACKLIGHT2: ausente (ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00)
+feature 0x1b04 REPROG_CONTROLS_V4: ausente (ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00)
+feature 0x1d4b WIRELESS_DEVICE_STATUS: indice=0x06 tipo=0x00 versao=0
+feature 0x4220 LOCK_KEY_STATE: ausente (ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00)
+feature 0x4521 KEYBOARD_DISABLE_KEYS: ausente (ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00)
+feature 0x40a3 K375S_FN_INVERSION: ausente (ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00)
+FEATURE_SET count = 22
+  [0x01] 0x0001 FEATURE_SET tipo=0x00
+  [0x02] 0x0003 DEVICE_FW_VERSION tipo=0x00
+  [0x03] 0x0005 DEVICE_NAME tipo=0x00
+  [0x04] 0x00c0  tipo=0x00
+  [0x05] 0x1000 BATTERY_STATUS tipo=0x00
+  [0x06] 0x1d4b WIRELESS_DEVICE_STATUS tipo=0x00
+  [0x07] 0x1df3  tipo=0x60
+  [0x08] 0x1e00  tipo=0x40
+  [0x09] 0x1e80  tipo=0x60
+  [0x0a] 0x1f03  tipo=0x60
+  [0x0b] 0x2100  tipo=0x00
+  [0x0c] 0x2200  tipo=0x00
+  [0x0d] 0x2201  tipo=0x00
+  [0x0e] 0x8080  tipo=0x00
+  [0x0f] 0x8060  tipo=0x00
+  [0x10] 0x8070  tipo=0x00
+  [0x11] 0x1810  tipo=0x60
+  [0x12] 0x1830  tipo=0x60
+  [0x13] 0x1850  tipo=0x60
+  [0x14] 0x1860  tipo=0x60
+  [0x15] 0x1890  tipo=0x60
+  [0x16] 0x18a0  tipo=0x60
+@mapa c537 01 00 0000
+@mapa c537 01 01 0001
+@mapa c537 01 02 0003
+@mapa c537 01 03 0005
+@mapa c537 01 04 00c0
+@mapa c537 01 05 1000
+@mapa c537 01 06 1d4b
+@mapa c537 01 07 1df3
+@mapa c537 01 08 1e00
+@mapa c537 01 09 1e80
+@mapa c537 01 0a 1f03
+@mapa c537 01 0b 2100
+@mapa c537 01 0c 2200
+@mapa c537 01 0d 2201
+@mapa c537 01 0e 8080
+@mapa c537 01 0f 8060
+@mapa c537 01 10 8070
+@mapa c537 01 11 1810
+@mapa c537 01 12 1830
+@mapa c537 01 13 1850
+@mapa c537 01 14 1860
+@mapa c537 01 15 1890
+@mapa c537 01 16 18a0
+nome_0005 = Wireless Gaming Mouse (len=21)
+codinome = G602 (ok 40 04 47 36 30 32 00 00 00 00 00 00 00 00 00 00)
+hosts_info_byte3 = n/a   change_host_p1 = n/a
+BATTERY_STATUS fn0 = ok 32 14 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  nivel=50 proximo=20 status=0
+notificacoes nao casadas em c537: 7
+      11 10 01 41 07 12 2c 40
+      29 11 01 00 11 02 00 5a 00 00 00 00 00 00 00 00 00 00 00 00 00
+      45 11 01 00 01 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+      61 11 01 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+      85 11 01 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+     101 11 01 05 01 32 14 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+     124 11 01 05 11 04 00 c0 78 0a 00 00 00 00 00 00 00 00 00 00 00
+
+=== receptor c548 (/dev/hidraw7, Logitech USB Receiver)
+receptor_flags_antes_c548 = ok 00 09 00
+  WIRELESS=sim SOFTWARE_PRESENT=sim
+receptor_flags_depois_c548 = (sem escrita, igual)
+gatilho reg 0x02 = ok 00 00 00
+0x41 dev=1 protocolo=0x10 p0=0x01 wpid=0xb369 link=sim [10 01 41 10 01 69 b3]
+--- dispositivo c548 dev 0x01
+ping = 4.5 (latencia 759 ms)
+feature 0x0001 FEATURE_SET: indice=0x01 tipo=0x00 versao=2
+feature 0x0005 DEVICE_NAME: indice=0x03 tipo=0x00 versao=0
+feature 0x1000 BATTERY_STATUS: ausente (ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00)
+feature 0x1004 UNIFIED_BATTERY: indice=0x07 tipo=0x00 versao=2
+feature 0x1814 CHANGE_HOST: indice=0x09 tipo=0x00 versao=2
+feature 0x1815 HOSTS_INFO: indice=0x0a tipo=0x00 versao=2
+feature 0x1982 BACKLIGHT2: indice=0x0b tipo=0x00 versao=3
+feature 0x1b04 REPROG_CONTROLS_V4: indice=0x08 tipo=0x00 versao=5
+feature 0x1d4b WIRELESS_DEVICE_STATUS: indice=0x04 tipo=0x00 versao=0
+feature 0x4220 LOCK_KEY_STATE: indice=0x0d tipo=0x00 versao=0
+feature 0x4521 KEYBOARD_DISABLE_KEYS: indice=0x0e tipo=0x00 versao=0
+feature 0x40a3 K375S_FN_INVERSION: indice=0x0c tipo=0x00 versao=0
+FEATURE_SET count = 31
+  [0x01] 0x0001 FEATURE_SET tipo=0x00
+  [0x02] 0x0003 DEVICE_FW_VERSION tipo=0x00
+  [0x03] 0x0005 DEVICE_NAME tipo=0x00
+  [0x04] 0x1d4b WIRELESS_DEVICE_STATUS tipo=0x00
+  [0x05] 0x0020 CONFIG_CHANGE tipo=0x00
+  [0x06] 0x0007  tipo=0x00
+  [0x07] 0x1004 UNIFIED_BATTERY tipo=0x00
+  [0x08] 0x1b04 REPROG_CONTROLS_V4 tipo=0x00
+  [0x09] 0x1814 CHANGE_HOST tipo=0x00
+  [0x0a] 0x1815 HOSTS_INFO tipo=0x00
+  [0x0b] 0x1982 BACKLIGHT2 tipo=0x00
+  [0x0c] 0x40a3 K375S_FN_INVERSION tipo=0x00
+  [0x0d] 0x4220 LOCK_KEY_STATE tipo=0x00
+  [0x0e] 0x4521 KEYBOARD_DISABLE_KEYS tipo=0x00
+  [0x0f] 0x4531  tipo=0x00
+  [0x10] 0x00c3  tipo=0x00
+  [0x11] 0x1802  tipo=0x70
+  [0x12] 0x1803  tipo=0x70
+  [0x13] 0x1806  tipo=0x70
+  [0x14] 0x1816  tipo=0x70
+  [0x15] 0x1805  tipo=0x60
+  [0x16] 0x1830  tipo=0x70
+  [0x17] 0x1891  tipo=0x68
+  [0x18] 0x18a1  tipo=0x70
+  [0x19] 0x1e00  tipo=0x40
+  [0x1a] 0x1e02  tipo=0x60
+  [0x1b] 0x1602  tipo=0x00
+  [0x1c] 0x1eb0  tipo=0x70
+  [0x1d] 0x1861  tipo=0x70
+  [0x1e] 0x1a20  tipo=0x70
+  [0x1f] 0x18b0  tipo=0x70
+@mapa c548 01 00 0000
+@mapa c548 01 01 0001
+@mapa c548 01 02 0003
+@mapa c548 01 03 0005
+@mapa c548 01 04 1d4b
+@mapa c548 01 05 0020
+@mapa c548 01 06 0007
+@mapa c548 01 07 1004
+@mapa c548 01 08 1b04
+@mapa c548 01 09 1814
+@mapa c548 01 0a 1815
+@mapa c548 01 0b 1982
+@mapa c548 01 0c 40a3
+@mapa c548 01 0d 4220
+@mapa c548 01 0e 4521
+@mapa c548 01 0f 4531
+@mapa c548 01 10 00c3
+@mapa c548 01 11 1802
+@mapa c548 01 12 1803
+@mapa c548 01 13 1806
+@mapa c548 01 14 1816
+@mapa c548 01 15 1805
+@mapa c548 01 16 1830
+@mapa c548 01 17 1891
+@mapa c548 01 18 18a1
+@mapa c548 01 19 1e00
+@mapa c548 01 1a 1e02
+@mapa c548 01 1b 1602
+@mapa c548 01 1c 1eb0
+@mapa c548 01 1d 1861
+@mapa c548 01 1e 1a20
+@mapa c548 01 1f 18b0
+nome_0005 = MX Keys Mini (len=12)
+codinome = MX Keys Mini (ok 61 01 0c 4d 58 20 4b 65 79 73 20 4d 69 6e 69 00)
+BACKLIGHT2 fn0 = ok 01 0d 3d 01 00 02 06 00 06 00 3c 00 00 00 00 00
+  enabled=1 options=0x0d supported=0x3d effects=0x0001 level=2 dho=6 dhi=6 dpow=60
+BACKLIGHT2 fn2 = ok 08 02 02 00 03 00 06 00 3c 00 00 00 00 00 00 00
+  backlight_niveis = 8
+CHANGE_HOST fn0 = ok 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  hosts=3 atual=0
+HOSTS_INFO fn0 = ok 13 08 03 00 00 00 00 00 00 00 00 00 00 00 00 00
+hosts_info_byte3 = 0x00   change_host_p1 = 0x00
+LOCK_KEY_STATE fn0 = ok 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+40A3 fn0 [0x00] = ok 00 00 01 01 00 00 00 00 00 00 00 00 00 00 00 00
+  fn_inv_estado (byte 1) = 0
+UNIFIED_BATTERY fn1 = ok 5a 08 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  soc=90 nivel=0x08 status=0 ext=0x00
+REPROG_V4 fn0 = ok 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  controles = 16
+  CID 0x00e2 (luz-) idx=3 tid=0x00c1 flags=0x043a pos=4 group=0 gmask=0x00 analytics=sim
+    getCidReporting = ok 00 e2 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+@cid c548 01 00e2 043a
+  CID 0x00e3 (luz+) idx=4 tid=0x00c2 flags=0x043a pos=5 group=0 gmask=0x00 analytics=sim
+    getCidReporting = ok 00 e3 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+@cid c548 01 00e3 043a
+  CID 0x0103 (Ditado) idx=5 tid=0x00d8 flags=0x043a pos=6 group=0 gmask=0x00 analytics=sim
+    getCidReporting = ok 01 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+@cid c548 01 0103 043a
+  CID 0x0108 (Emoji) idx=6 tid=0x00dd flags=0x043a pos=7 group=0 gmask=0x00 analytics=sim
+    getCidReporting = ok 01 08 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+@cid c548 01 0108 043a
+  CID 0x010a (captura) idx=7 tid=0x00df flags=0x043a pos=8 group=0 gmask=0x00 analytics=sim
+    getCidReporting = ok 01 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+@cid c548 01 010a 043a
+notificacoes nao casadas em c548: 1
+      12 10 01 41 10 01 69 b3
+

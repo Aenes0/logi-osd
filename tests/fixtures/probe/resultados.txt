@@ -1,0 +1,50 @@
+indices_mx = 0x1004:0x07 0x1982:0x0b 0x4220:0x0d 0x1b04:0x08 0x1814:0x09 0x40a3:0x0c 0x1815:0x0a 0x1d4b:0x04 0x0005:0x03 0x0001:0x01 0x4521:0x0e   # MX Keys Mini, c548 dev 1
+indices_g602 = 0x1000:0x05 0x1d4b:0x06 0x0005:0x03 0x0001:0x01   # G602, c537 dev 1; sem 0x1004/0x1814/0x1815/0x1982/0x1b04
+nome_0005_mx = MX Keys Mini
+codinome_mx = MX Keys Mini
+nome_0005_g602 = Wireless Gaming Mouse
+codinome_g602 = G602
+receptor_flags_antes_c548 = 00 09 00   # WIRELESS + SOFTWARE_PRESENT já ligados; nenhuma escrita
+receptor_flags_antes_c537 = 00 09 00   # idem
+receptor_precisa_wireless = inconclusivo   # o bit já estava ligado nos dois receptores; não foi testado sem ele
+lock_caps_notifica = sim   # caps.hex: 5 eventos 0x4220 (11 01 0d 00 02.. / 11 01 0d 00 00..)
+lock_num_notifica = sem_tecla   # MX Keys Mini não tem Num Lock
+lock_insert_reportado = nao   # insert.hex: 0 frames HID++ com Insert apertado
+lock_evento = 0   # address 0x00 no índice 0x0d
+lock_layout = p0 bit1=caps (0x02 ligado, 0x00 desligado); bit0=num e bit2=scroll presumidos (convenção LED HID), não observados; insert não reportado
+lock_fn0_resposta = 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   # lido com caps desligado (info e releitura)
+lock_fn0_layout = presumido igual ao evento (p0 = máscara de locks); fn0 nunca lido com caps ligado
+fn_inv_notifica = sim   # 2 eventos 0x40A3 vistos ao vivo (ver apêndice de fn-esc.hex; capturados da tela, não do .hex original)
+fn_inv_evento = 0   # address 0x00 no índice 0x0c
+fn_inv_layout = p0 = prefixo do host (0x00 = HOSTS_INFO byte 3), p1 = estado (0/1), p2 p3 = 01 01 (fixos, iguais a fn0 bytes 2..3)
+fn_inv_semantica = estado 1 = F1..F12 dão a função especial/mídia sem Fn (Solaar fn-swap True); estado 0 = F1..F12 padrão (fn-swap False, estado original)
+backlight_niveis = 8   # BACKLIGHT2 fn2 byte 0
+backlight_faixa_observada = 3..5   # p1 dos eventos de luz-manual (luz + 3x: 3→4→5); luz − não capturada
+backlight_evento_manual = 11 01 0b 00 08 03 04 00 00 00 00 00 00 00 00 00 00 00 00 00   # p0=0x08 (=nº de níveis?), p1=nível, p2=0x04 (desconhecido)
+backlight_evento_auto = nada   # luz-auto.hex: 0 frames em 90 s com a luz apagando/acendendo sozinha
+backlight_distingue = sim
+backlight_criterio = todo evento BACKLIGHT2 (idx 0x0b, evento 0) recebido vem de tecla manual; mudança automática não notifica
+analytics_backlight = nao_testado   # desnecessário (backlight_distingue = sim); flags 0x043a têm 0x400 em 0x00E2/0x00E3
+analytics_evento = nao_testado
+analytics_layout = nao_testado
+unified_push = sim   # carga.hex: 11 01 07 00 5a 08 01 01 (plugado) / 11 01 07 00 5a 08 00 00 (desplugado); também após reconexão
+unified_layout = soc,nivel,status,ext confirmado (soc=0x5a=90, nivel=0x08, status 1=carregando 0=descarregando, ext 1=cabo externo presente)
+g602_responde = 10/10   # ping-g602.txt, todas < 100 ms (todas dentro de 1 s)
+g602_bateria_push = inconclusivo   # nenhum push em sono-g602 (467 s de uso); período < 20 min previstos
+easyswitch_saida = 11 01 09 00 00 01 00.. ; 10 01 41 10 41 69 b3   # evento CHANGE_HOST (idx 0x09) p0=0x00 p1=0x01, depois 0x41 link perdido
+easyswitch_volta = 10 01 41 10 01 69 b3 ; 11 01 04 00 01 01 01 00.. ; 11 01 07 00 5a 08 00 00..   # 0x41 link ok, 0x1D4B evento 0 [01 01 01], UNIFIED_BATTERY
+sono_gera_0x41 = nao   # sono-g602.hex: 0 frames em ~7.8 min (467 s; duração encurtada, previsto 10 min)
+desliga_liga = 10 01 41 10 41 69 b3 (desliga) ; 10 01 41 10 01 69 b3 ; 11 01 04 00 01 01 01 00.. ; 11 01 07 00 5a 08 00 00.. (liga)   # igual à volta do Easy-Switch
+power_on_0x4b = nao   # nenhum sub_id 0x4B em desliga-liga.hex
+sono_gera_0x4b = nao   # nenhum frame em sono-g602.hex
+hosts_info_byte3 = 0x00
+change_host_p1 = 0x00
+change_host_volta = 3, 0   # CHANGE_HOST fn0 relido depois dos cenários: 03 00
+emoji_normal_hidpp = nada   # emoji-normal.hex: 0 frames
+emoji_normal_efeito = nada visível   # relatado pelo usuário
+emoji_desviado_evento = 11 01 08 00 01 08 00 00.. / 11 01 08 00 00 00 00 00..   # REPROG V4 evento 0: p0..p1 = CID pressionada (0x0108), zeros = soltar
+emoji_desvio_sobrevive_easyswitch = nao   # sem eventos depois de canal 2 → canal 1; desvio perdido na reconexão
+solaar_desfaz_desvio = sim   # inferido da config (~/.config/solaar/config.yaml divert-keys 264: 0); não testado ao vivo
+solaar_coexiste_caps = nao_testado   # Solaar não rodou em nenhum cenário
+bt_direto = nao   # canal 3 (BT, A-SERVER): nenhum nó Logitech BT novo em listar (bt_no.txt = nenhum)
+bt_no = nenhum
