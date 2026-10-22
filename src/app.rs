@@ -91,7 +91,7 @@ pub struct App {
 impl App {
     pub fn new(cfg: &crate::config::Config) -> Self {
         Self {
-            durations: Durations { normal: cfg.duration, critical: cfg.duration_critical },
+            durations: Durations { normal: cfg.duration, critical: crate::message::CRITICAL_DURATION },
             thresholds: Thresholds { low: cfg.battery_low, critical: cfg.battery_critical },
             emoji_enabled: cfg.emoji_command.is_some(),
             devices: Vec::new(),
@@ -234,7 +234,7 @@ mod tests {
 
     fn durations() -> Durations {
         let c = Config::default();
-        Durations { normal: c.duration, critical: c.duration_critical }
+        Durations { normal: c.duration, critical: crate::message::CRITICAL_DURATION }
     }
 
     fn summary() -> DeviceSummary {

@@ -23,6 +23,9 @@ pub enum LockKey { Caps, Num, Insert }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Durations { pub normal: Duration, pub critical: Duration } // 1500 / 4000 ms
 
+/// Duração das pílulas críticas (hoje nenhuma usa: a bateria crítica é cartão); fixa, sem chave de config.
+pub const CRITICAL_DURATION: Duration = Duration::from_millis(4000);
+
 pub const FALLBACK_NAME: &str = "Dispositivo Logitech";
 
 /// Nome exibido: o aparado, ou `FALLBACK_NAME` se vazio.

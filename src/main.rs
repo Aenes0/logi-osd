@@ -106,7 +106,7 @@ fn run(mode: RunMode) -> Result<(), BoxError> {
                 .map_err(|e| e.error)?;
         }
         RunMode::Demo => {
-            let pills = demo_pills(&Durations { normal: state.cfg.duration, critical: state.cfg.duration_critical });
+            let pills = demo_pills(&Durations { normal: state.cfg.duration, critical: message::CRITICAL_DURATION });
             let signal = event_loop.get_signal();
             let mut next = 0;
             handle

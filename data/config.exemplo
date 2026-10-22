@@ -19,10 +19,6 @@
 # Tempo que a pílula fica na tela, em milissegundos. Faixa: 200 a 20000.
 # duracao_ms = 1500
 
-# Tempo da pílula com duração crítica, em milissegundos. Faixa: 200 a 20000.
-# (Hoje nenhuma pílula usa: o único aviso crítico, a bateria a 5%, é cartão.)
-# duracao_critica_ms = 4000
-
 # Intervalo de leitura da bateria, em minutos, para dispositivos que não avisam sozinhos
 # (o G602, por exemplo). Faixa: 1 a 1440.
 # intervalo_bateria_min = 15

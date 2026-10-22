@@ -29,6 +29,10 @@ pub const SYNC_KEY: &str = "logi-osd";
 const DEST: &str = "org.freedesktop.Notifications";
 const PATH: &str = "/org/freedesktop/Notifications";
 const IFACE: &str = "org.freedesktop.Notifications";
+/// Casa só a troca de dono do nome do daemon: acorda o laço nessas trocas raras, nunca em repouso.
+const OWNER_MATCH: &str = "type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0='org.freedesktop.Notifications'";
+const ERR_SERVICE_UNKNOWN: &str = "org.freedesktop.DBus.Error.ServiceUnknown";
+const ERR_NAME_HAS_NO_OWNER: &str = "org.freedesktop.DBus.Error.NameHasNoOwner";
 
 /// Tipos de erro locais (os de resposta usam o nome do erro D-Bus).
 const KIND_CONNECT: &str = "conexão";
@@ -171,10 +175,19 @@ impl ErrorLog {
     }
 }
 
+/// Só a bateria baixa/crítica vira cartão (fica no histórico), então só ela é reenviada.
+fn is_card(p: &Pill) -> bool {
+    p.icon == Icon::Battery
+}
+
 /// Conexão viva, compartilhada entre o `Notifier` e o callback do fd no laço.
 struct Conn {
     channel: Channel,
     log: Rc<RefCell<ErrorLog>>,
+    /// Último cartão não entregue (compartilhado com o `Notifier`, que sobrevive à conexão).
+    pending: Rc<RefCell<Option<Pill>>>,
+    /// Cartões enviados e ainda sem resposta, por serial, na ordem de envio.
+    inflight: RefCell<Vec<(u32, Pill)>>,
     dead: Cell<bool>,
     /// `None` depois que a fonte saiu do laço (pelo callback ou pelo `Notifier`).
     token: Cell<Option<RegistrationToken>>,
@@ -186,7 +199,63 @@ fn is_disconnected(msg: &Message) -> bool {
         && msg.member().is_some_and(|m| &*m == "Disconnected")
 }
 
+/// `NameOwnerChanged` do nome do daemon com dono novo (o daemon subiu).
+fn is_owner_gained(msg: &Message) -> bool {
+    if msg.msg_type() != MessageType::Signal || msg.member().is_none_or(|m| &*m != "NameOwnerChanged") {
+        return false;
+    }
+    matches!(msg.get3::<&str, &str, &str>(), (Some(name), _, Some(new_owner)) if name == DEST && !new_owner.is_empty())
+}
+
 impl Conn {
+    /// Enfileira o `Notify` e esvazia o buffer de saída. Cartão: fica em voo até a resposta; se
+    /// o envio falhar, vira o pendente. `false` se não foi enfileirado.
+    fn transmit(&self, p: &Pill) -> bool {
+        let sent = match notify_message(&to_notify(p)) {
+            Ok(m) => self.channel.send(m).ok(),
+            Err(e) => {
+                self.log.borrow_mut().report(KIND_SEND, &format!("chamada Notify não montada: {e}"));
+                None
+            }
+        };
+        // Bloqueia só até o buffer de saída esvaziar (socket local), nunca pela resposta.
+        self.channel.flush();
+        match sent {
+            Some(serial) => {
+                if is_card(p) {
+                    self.inflight.borrow_mut().push((serial, p.clone()));
+                }
+                true
+            }
+            None => {
+                if is_card(p) {
+                    *self.pending.borrow_mut() = Some(p.clone());
+                }
+                false
+            }
+        }
+    }
+
+    /// Reenvia o cartão pendente (uma vez: sai do pendente ao ser enviado).
+    fn resend_pending(&self) {
+        let card = self.pending.borrow_mut().take();
+        if let Some(card) = card {
+            self.transmit(&card);
+        }
+    }
+
+    /// Resposta de erro a um cartão em voo: sem dono no nome vira o pendente, desde que nenhum
+    /// cartão mais novo tenha sido enviado depois (o mais novo substitui o antigo).
+    fn card_failed(&self, serial: u32, error: &str) {
+        let mut inflight = self.inflight.borrow_mut();
+        let Some(idx) = inflight.iter().position(|(s, _)| *s == serial) else { return };
+        let (_, card) = inflight.remove(idx);
+        let newest = idx == inflight.len();
+        if newest && (error == ERR_SERVICE_UNKNOWN || error == ERR_NAME_HAS_NO_OWNER) {
+            *self.pending.borrow_mut() = Some(card);
+        }
+    }
+
     /// Lê o socket sem bloquear e descarta as respostas; `false` se a conexão caiu.
     fn drain(&self) -> bool {
         let ch = &self.channel;
@@ -195,15 +264,26 @@ impl Conn {
         }
         while let Some(mut msg) = ch.pop_message() {
             match msg.msg_type() {
-                MessageType::MethodReturn => self.log.borrow_mut().success(),
+                MessageType::MethodReturn => {
+                    self.log.borrow_mut().success();
+                    if let Some(serial) = msg.get_reply_serial() {
+                        self.inflight.borrow_mut().retain(|(s, _)| *s != serial);
+                    }
+                    // O daemon respondeu: é a hora de reenviar o cartão que ficou para trás.
+                    self.resend_pending();
+                }
                 MessageType::Error => {
                     if let Err(e) = msg.as_result() {
                         let name = e.name().unwrap_or("erro D-Bus").to_owned();
+                        if let Some(serial) = msg.get_reply_serial() {
+                            self.card_failed(serial, &name);
+                        }
                         let detail = format!("aviso não entregue ao daemon de notificações ({name}): {}", e.message().unwrap_or(""));
                         self.log.borrow_mut().report(&name, &detail);
                     }
                 }
                 _ if is_disconnected(&msg) => self.dead.set(true),
+                _ if is_owner_gained(&msg) => self.resend_pending(),
                 _ => {}
             }
         }
@@ -216,42 +296,50 @@ pub struct Notifier {
     address: Option<String>,
     conn: Option<Rc<Conn>>,
     log: Rc<RefCell<ErrorLog>>,
+    /// Último cartão de bateria que não foi entregue (reenvio na volta do daemon).
+    pending: Rc<RefCell<Option<Pill>>>,
 }
 
 impl Notifier {
     /// `address`: None = barramento de sessão do ambiente; Some = endereço explícito (testes). Conecta na 1ª send.
     pub fn new(address: Option<String>) -> Notifier {
-        Notifier { address, conn: None, log: Rc::new(RefCell::new(ErrorLog::default())) }
+        Notifier { address, conn: None, log: Rc::new(RefCell::new(ErrorLog::default())), pending: Rc::new(RefCell::new(None)) }
     }
 
     /// Não bloqueia esperando resposta: envia a chamada (com resposta esperada) e volta; as
     /// respostas e erros chegam pelo fd no calloop e são descartados (erro: uma linha de log por
     /// tipo até o próximo sucesso). Falha de envio descarta a conexão; a próxima send reconecta.
     pub fn send<S: 'static>(&mut self, handle: &LoopHandle<'static, S>, p: &Pill) {
-        let msg = match notify_message(&to_notify(p)) {
-            Ok(m) => m,
-            Err(e) => {
-                self.log.borrow_mut().report(KIND_SEND, &format!("chamada Notify não montada: {e}"));
-                return;
-            }
-        };
+        if is_card(p) {
+            // Um cartão novo substitui o pendente (que não é mais o último).
+            *self.pending.borrow_mut() = None;
+        }
         if self.conn.as_ref().is_some_and(|c| c.dead.get()) {
             self.disconnect(handle);
         }
-        let Some(conn) = self.connection(handle) else { return };
-        let queued = conn.channel.send(msg).is_ok();
-        // Bloqueia só até o buffer de saída esvaziar (socket local), nunca pela resposta.
-        conn.channel.flush();
+        let Some(conn) = self.connection(handle) else {
+            self.hold(p);
+            return;
+        };
+        let queued = conn.transmit(p);
         if !queued || !conn.channel.is_connected() {
             self.log
                 .borrow_mut()
                 .report(KIND_SEND, "a conexão com o barramento de sessão caiu; o próximo aviso reconecta");
+            self.hold(p);
             self.disconnect(handle);
             return;
         }
         // O `flush` pode ter lido mensagens para o buffer sem o fd voltar a ficar legível.
         if !conn.drain() {
             self.disconnect(handle);
+        }
+    }
+
+    /// Guarda o cartão que não saiu (pílula não se guarda: perdeu a hora).
+    fn hold(&self, p: &Pill) {
+        if is_card(p) {
+            *self.pending.borrow_mut() = Some(p.clone());
         }
     }
 
@@ -279,12 +367,27 @@ impl Notifier {
         }
         .map_err(|e| e.message().unwrap_or("falha ao conectar").to_owned())?;
         channel.set_watch_enabled(true);
+        // Falha aqui só desliga o reenvio na volta do daemon; o reenvio na próxima `send` fica.
+        let rule = Message::new_method_call("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "AddMatch")
+            .map(|m| m.append1(OWNER_MATCH))
+            .map_err(|e| e.to_string())
+            .and_then(|m| channel.send_with_reply_and_block(m, Duration::from_secs(1)).map_err(|e| e.message().unwrap_or("AddMatch").to_owned()));
+        if let Err(e) = rule {
+            self.log.borrow_mut().report("match", &format!("sem aviso de troca de dono do daemon de notificações: {e}"));
+        }
         // SAFETY: o fd do watch está aberto enquanto o canal (vivo aqui) existir; só é duplicado.
         // A cópia é da fonte do laço: o libdbus fecha o dele quando a conexão cai.
         let fd = unsafe { BorrowedFd::borrow_raw(channel.watch().fd) }
             .try_clone_to_owned()
             .map_err(|e| format!("dup do fd do D-Bus: {e}"))?;
-        let conn = Rc::new(Conn { channel, log: self.log.clone(), dead: Cell::new(false), token: Cell::new(None) });
+        let conn = Rc::new(Conn {
+            channel,
+            log: self.log.clone(),
+            pending: self.pending.clone(),
+            inflight: RefCell::new(Vec::new()),
+            dead: Cell::new(false),
+            token: Cell::new(None),
+        });
         let in_loop = conn.clone();
         let token = handle
             .insert_source(Generic::new(fd, Interest::READ, Mode::Level), move |_, _, _: &mut S| {
@@ -311,6 +414,11 @@ impl Notifier {
     #[cfg(test)]
     fn connected(&self) -> bool {
         self.conn.as_ref().is_some_and(|c| !c.dead.get())
+    }
+
+    #[cfg(test)]
+    fn pending(&self) -> Option<Pill> {
+        self.pending.borrow().clone()
     }
 
     #[cfg(test)]
@@ -570,6 +678,98 @@ mod tests {
             assert_eq!(got.body, "Teclas de mídia");
             pump(&mut el, Duration::from_millis(100));
             assert!(n.logged().is_empty());
+        }
+
+        fn low(pct: u8) -> crate::message::Pill {
+            message::battery(crate::battery::BatteryAlert::Low(pct), "MX Keys Mini", &D)
+        }
+
+        fn drain_calls(el: &mut EventLoop<'static, ()>, calls: &Receiver<Recorded>, d: Duration) -> Vec<Recorded> {
+            pump(el, d);
+            calls.try_iter().collect()
+        }
+
+        #[test]
+        fn battery_card_without_daemon_is_held_and_delivered_when_daemon_returns() {
+            let bus = PrivateBus::start();
+            let mut el = event_loop();
+            let mut n = Notifier::new(Some(bus.address.clone()));
+            let card = low(15);
+            n.send(&el.handle(), &card);
+            pump(&mut el, Duration::from_millis(200));
+            assert_eq!(n.pending(), Some(card.clone()), "o cartão não ficou pendente");
+
+            // O daemon volta; nenhum evento novo no logi-osd.
+            let rec = Recorder::start(&bus);
+            let got = next_call(&mut el, &rec.calls).expect("o cartão pendente não chegou");
+            assert_eq!((got.summary.as_str(), got.body.as_str()), ("MX Keys Mini: bateria baixa", "15%"));
+            pump(&mut el, Duration::from_millis(100));
+            assert_eq!(n.pending(), None);
+            // No máximo uma vez.
+            assert!(drain_calls(&mut el, &rec.calls, Duration::from_millis(200)).is_empty());
+        }
+
+        #[test]
+        fn failed_pill_is_not_held() {
+            let bus = PrivateBus::start();
+            let mut el = event_loop();
+            let mut n = Notifier::new(Some(bus.address.clone()));
+            n.send(&el.handle(), &message::lock(LockKey::Caps, true, &D));
+            pump(&mut el, Duration::from_millis(200));
+            assert_eq!(n.pending(), None);
+            let rec = Recorder::start(&bus);
+            assert!(drain_calls(&mut el, &rec.calls, Duration::from_millis(300)).is_empty(), "a pílula não deve ser reenviada");
+        }
+
+        #[test]
+        fn only_the_last_failed_card_is_resent() {
+            let bus = PrivateBus::start();
+            let mut el = event_loop();
+            let mut n = Notifier::new(Some(bus.address.clone()));
+            n.send(&el.handle(), &low(15));
+            n.send(&el.handle(), &low(5));
+            pump(&mut el, Duration::from_millis(200));
+            assert_eq!(n.pending(), Some(low(5)));
+            let rec = Recorder::start(&bus);
+            let calls = drain_calls(&mut el, &rec.calls, Duration::from_millis(500));
+            let bodies: Vec<&str> = calls.iter().map(|c| c.body.as_str()).collect();
+            assert_eq!(bodies, vec!["5%"]);
+        }
+
+        #[test]
+        fn pending_card_is_resent_on_next_successful_send_and_new_card_replaces_it() {
+            let bus = PrivateBus::start();
+            let mut el = event_loop();
+            let mut n = Notifier::new(Some(bus.address.clone()));
+            n.send(&el.handle(), &low(15));
+            pump(&mut el, Duration::from_millis(200));
+            assert_eq!(n.pending(), Some(low(15)));
+            // Um cartão novo substitui o pendente, e sai com o daemon de volta uma vez só.
+            n.send(&el.handle(), &low(5));
+            assert_eq!(n.pending(), None, "o cartão novo está em voo; o antigo foi substituído");
+            pump(&mut el, Duration::from_millis(200));
+            assert_eq!(n.pending(), Some(low(5)));
+            let rec = Recorder::start(&bus);
+            let calls = drain_calls(&mut el, &rec.calls, Duration::from_millis(500));
+            assert_eq!(calls.iter().map(|c| c.body.as_str()).collect::<Vec<_>>(), vec!["5%"]);
+        }
+
+        #[test]
+        fn pending_card_is_resent_after_a_successful_send() {
+            let bus = PrivateBus::start();
+            let mut el = event_loop();
+            let mut n = Notifier::new(Some(bus.address.clone()));
+            n.send(&el.handle(), &low(15));
+            pump(&mut el, Duration::from_millis(200));
+            assert_eq!(n.pending(), Some(low(15)));
+            // O dono do nome muda e a conexão do teste não vê a troca: simula pelo envio normal.
+            let rec = Recorder::start(&bus);
+            n.send(&el.handle(), &message::lock(LockKey::Caps, true, &D));
+            let calls = drain_calls(&mut el, &rec.calls, Duration::from_millis(500));
+            let mut bodies: Vec<&str> = calls.iter().map(|c| c.body.as_str()).collect();
+            bodies.sort_unstable();
+            assert_eq!(bodies, vec!["15%", "Ativado"]);
+            assert_eq!(n.pending(), None);
         }
 
         #[test]
