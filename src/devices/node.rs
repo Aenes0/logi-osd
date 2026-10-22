@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use rustix::event::{PollFd, PollFlags, Timespec, poll};
-use smithay_client_toolkit::reexports::calloop::channel::Sender;
+use calloop::channel::Sender;
 
 use super::select::{NodeKind, VENDOR_LOGITECH, parse_hid_id, select};
 use super::worker::NodeWorker;
@@ -322,7 +322,7 @@ mod tests {
     }
 
     #[test] fn guard_sends_node_gone_only_on_panic() {
-        let (tx, rx) = smithay_client_toolkit::reexports::calloop::channel::channel::<NodeEvent>();
+        let (tx, rx) = calloop::channel::channel::<NodeEvent>();
         let tx2 = tx.clone();
         let t = std::thread::spawn(move || {
             let _guard = GoneOnPanic { tx: tx2, node: 5 };

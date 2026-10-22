@@ -5,27 +5,25 @@ mod devices;
 mod emoji;
 mod hidpp;
 mod message;
-mod osd;
+mod notify;
+#[cfg(test)]
+mod test_bus;
 
 use std::io;
-use std::path::PathBuf;
 use std::process::ExitCode;
 use std::time::{Duration, Instant};
 
-use smithay_client_toolkit::reexports::calloop::channel::{self, Sender};
-use smithay_client_toolkit::reexports::calloop::generic::Generic;
-use smithay_client_toolkit::reexports::calloop::timer::{TimeoutAction, Timer};
-use smithay_client_toolkit::reexports::calloop::{EventLoop, Interest, LoopHandle, Mode, PostAction, RegistrationToken};
+use calloop::channel::{self, Sender};
+use calloop::generic::Generic;
+use calloop::timer::{TimeoutAction, Timer};
+use calloop::{EventLoop, Interest, LoopHandle, Mode, PostAction};
 
 use crate::app::{Action, App, NodeEvent};
 use crate::battery::BatteryAlert;
 use crate::config::Config;
 use crate::devices::node::{FoundNode, Hotplug, LiveNodes, is_new_device, reinspect, spawn_node};
 use crate::message::{Durations, LockKey, Pill};
-use crate::osd::controller::{OsdAction, OsdController};
-use crate::osd::render::Renderer;
-use crate::osd::theme;
-use crate::osd::wayland::Osd;
+use crate::notify::Notifier;
 
 /// Depuração (`--listar-nos`): quanto tempo imprimir os eventos dos nós.
 const LIST_NODES_FOR: Duration = Duration::from_secs(30);
@@ -54,33 +52,24 @@ fn main() -> ExitCode {
     }
 }
 
-/// Timer de esconder, armado só com pílula visível.
-struct HideTimer { token: RegistrationToken, armed: Instant }
-
 pub struct State {
     app: App,
-    osd: Osd,
-    controller: OsdController,
-    renderer: Renderer,
+    /// Os avisos vão ao daemon de notificações (que desenha a pílula e troca a anterior).
+    notifier: Notifier,
     cfg: Config,
-    /// `~/.config/cosmic` (tema relido a cada pílula).
-    cosmic_dir: PathBuf,
-    hide_timer: Option<HideTimer>,
-    /// Prazo da pílula visível (o timer pode estar armado para antes e então se reprograma).
-    deadline: Instant,
     handle: LoopHandle<'static, State>,
     live: LiveNodes,
     tx: Sender<NodeEvent>,
+    /// `LOGI_OSD_DEBUG=1`: imprime `{ms} ms evento→envio`.
+    debug: bool,
 }
 
-/// Repouso: nenhum timer armado e nenhuma superfície; o loop dorme em `run(None)` até um evento
-/// de nó, de hotplug ou do compositor.
+/// Repouso: nenhum timer armado; o loop dorme em `run(None)` até um evento de nó, de hotplug ou
+/// uma resposta do barramento (só logo depois de um aviso enviado).
 fn run(mode: RunMode) -> Result<(), BoxError> {
     let cfg = config::load();
-    let renderer = Renderer::load(cfg.font.as_deref())?;
     let mut event_loop: EventLoop<'static, State> = EventLoop::try_new()?;
     let handle = event_loop.handle();
-    let osd = Osd::connect(&handle)?;
 
     let (tx, rx) = channel::channel::<NodeEvent>();
     handle
@@ -93,16 +82,12 @@ fn run(mode: RunMode) -> Result<(), BoxError> {
 
     let mut state = State {
         app: App::new(&cfg),
-        osd,
-        controller: OsdController::default(),
-        renderer,
-        cosmic_dir: config::config_home().join("cosmic"),
+        notifier: Notifier::new(None),
         cfg,
-        hide_timer: None,
-        deadline: Instant::now(),
         handle: handle.clone(),
         live: LiveNodes::default(),
         tx,
+        debug: std::env::var_os("LOGI_OSD_DEBUG").is_some_and(|v| v == "1"),
     };
 
     match mode {
@@ -160,32 +145,6 @@ fn demo_pills(d: &Durations) -> Vec<Pill> {
     ]
 }
 
-/// O timer só é recriado se o novo prazo vem antes do armado; senão ele dispara, vê o prazo
-/// ainda futuro e se reprograma (sem fonte nova no loop).
-fn needs_rearm(armed: Option<Instant>, deadline: Instant) -> bool {
-    armed.is_none_or(|armed| deadline < armed)
-}
-
-/// O que o timer de esconder faz ao disparar.
-#[derive(Debug, PartialEq)]
-enum HideDecision {
-    /// Prazo atingido: esconde e larga o timer.
-    Hide,
-    /// Pílula ainda visível com prazo mais tarde (foi trocada): reprograma para o prazo atual.
-    Reschedule(Instant),
-    /// Nada visível: larga o timer.
-    Drop,
-}
-
-/// `expired` = resultado de `OsdController::expire` no disparo; `deadline` = prazo da pílula atual.
-fn hide_decision(expired: &OsdAction, visible: bool, deadline: Instant) -> HideDecision {
-    match expired {
-        OsdAction::Hide => HideDecision::Hide,
-        _ if visible => HideDecision::Reschedule(deadline),
-        _ => HideDecision::Drop,
-    }
-}
-
 impl State {
     fn on_node_event(&mut self, ev: NodeEvent) {
         let gone = match ev {
@@ -231,62 +190,11 @@ impl State {
         }
     }
 
+    /// `now` = instante do evento (base da medição do `LOGI_OSD_DEBUG`).
     fn show(&mut self, pill: Pill, now: Instant) {
-        let OsdAction::Present { deadline, .. } = self.controller.show(pill, now) else { return };
-        self.deadline = deadline;
-        self.redraw_at(now);
-        self.arm_hide(deadline);
-    }
-
-    /// Redesenha a pílula visível (troca de escala da superfície).
-    pub(crate) fn redraw(&mut self) {
-        self.redraw_at(Instant::now());
-    }
-
-    /// Tema relido a cada desenho (só acontece com pílula sendo mostrada).
-    fn redraw_at(&mut self, since: Instant) {
-        let Some(pill) = self.controller.visible() else { return };
-        let theme = theme::load(&self.cosmic_dir);
-        let renderer = &self.renderer;
-        self.osd.present(since, |scale| renderer.render(pill, &theme, scale));
-    }
-
-    fn arm_hide(&mut self, deadline: Instant) {
-        if !needs_rearm(self.hide_timer.as_ref().map(|t| t.armed), deadline) {
-            return;
-        }
-        if let Some(old) = self.hide_timer.take() {
-            self.handle.remove(old.token);
-        }
-        match self.handle.insert_source(Timer::from_deadline(deadline), |_, _, s: &mut State| s.on_hide_timer()) {
-            Ok(token) => self.hide_timer = Some(HideTimer { token, armed: deadline }),
-            Err(e) => {
-                // Sem timer a pílula ficaria na tela para sempre: esconde já.
-                eprintln!("logi-osd: timer de esconder não criado: {}", e.error);
-                self.controller.expire(deadline);
-                self.osd.hide();
-            }
-        }
-    }
-
-    fn on_hide_timer(&mut self) -> TimeoutAction {
-        let expired = self.controller.expire(Instant::now());
-        match hide_decision(&expired, self.controller.visible().is_some(), self.deadline) {
-            HideDecision::Hide => {
-                self.osd.hide();
-                self.hide_timer = None;
-                TimeoutAction::Drop
-            }
-            HideDecision::Reschedule(at) => {
-                if let Some(t) = self.hide_timer.as_mut() {
-                    t.armed = at;
-                }
-                TimeoutAction::ToInstant(at)
-            }
-            HideDecision::Drop => {
-                self.hide_timer = None;
-                TimeoutAction::Drop
-            }
+        self.notifier.send(&self.handle, &pill);
+        if self.debug {
+            eprintln!("logi-osd: {:.1} ms evento→envio", now.elapsed().as_secs_f64() * 1000.0);
         }
     }
 }
@@ -342,34 +250,6 @@ fn list_start_node(n: FoundNode, live: &mut LiveNodes, initial_enumeration: bool
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn hide_timer_rearms_only_for_earlier_deadline() {
-        let t = Instant::now();
-        assert!(needs_rearm(None, t), "sem timer: arma");
-        assert!(needs_rearm(Some(t + Duration::from_secs(4)), t + Duration::from_millis(1500)), "prazo mais cedo: recria");
-        assert!(!needs_rearm(Some(t), t + Duration::from_secs(1)), "prazo mais tarde: o timer se reprograma");
-        assert!(!needs_rearm(Some(t), t), "mesmo prazo: nada");
-    }
-
-    #[test]
-    fn hide_timer_hides_when_deadline_reached() {
-        let t = Instant::now();
-        assert_eq!(hide_decision(&OsdAction::Hide, false, t), HideDecision::Hide);
-    }
-
-    #[test]
-    fn hide_timer_reschedules_while_pill_still_due_later() {
-        // Pílula trocada por outra de prazo mais longo: o timer antigo dispara cedo e precisa
-        // se reprogramar; largá-lo deixaria a pílula na tela para sempre.
-        let later = Instant::now() + Duration::from_secs(2);
-        assert_eq!(hide_decision(&OsdAction::Nothing, true, later), HideDecision::Reschedule(later));
-    }
-
-    #[test]
-    fn hide_timer_drops_when_nothing_visible() {
-        assert_eq!(hide_decision(&OsdAction::Nothing, false, Instant::now()), HideDecision::Drop);
-    }
 
     #[test]
     fn demo_has_one_pill_per_copy_row() {

@@ -14,7 +14,6 @@ pub struct Config {
     /// Invariante: `None` ou texto não vazio e aparado (é o único predicado de "há comando":
     /// `App`, o desvio da tecla e `main` usam `is_some()`).
     pub emoji_command: Option<String>,
-    pub font: Option<PathBuf>,
 }
 
 impl Default for Config {
@@ -26,7 +25,6 @@ impl Default for Config {
             duration_critical: Duration::from_millis(4000),
             legacy_battery_interval: Duration::from_secs(15 * 60),
             emoji_command: None,
-            font: None,
         }
     }
 }
@@ -68,7 +66,7 @@ fn apply(cfg: &mut Config, key: &str, value: &str) -> Result<(), String> {
         "duracao_critica_ms" => cfg.duration_critical = Duration::from_millis(in_range(value, 200, 20_000)?),
         "intervalo_bateria_min" => cfg.legacy_battery_interval = Duration::from_secs(in_range(value, 1, 1440)? * 60),
         "comando_emoji" => cfg.emoji_command = non_empty(value),
-        "fonte" => cfg.font = non_empty(value).map(PathBuf::from),
+        "fonte" => return Err("chave obsoleta \"fonte\" (o texto agora é desenhado pelo daemon de notificações)".into()),
         _ => return Err(format!("chave desconhecida `{key}`")),
     }
     Ok(())
@@ -139,11 +137,7 @@ pub fn config_path() -> PathBuf {
     path_from(std::env::var_os("XDG_CONFIG_HOME"), std::env::var_os("HOME"))
 }
 
-/// `$XDG_CONFIG_HOME` (se absoluto), senão `~/.config`. Também é a base do tema do COSMIC.
-pub fn config_home() -> PathBuf {
-    home_from(std::env::var_os("XDG_CONFIG_HOME"), std::env::var_os("HOME"))
-}
-
+/// `$XDG_CONFIG_HOME` (se absoluto), senão `~/.config`.
 fn home_from(xdg_config_home: Option<OsString>, home: Option<OsString>) -> PathBuf {
     match xdg_config_home.filter(|v| !v.is_empty()).map(PathBuf::from) {
         Some(path) if path.is_absolute() => path,
@@ -175,7 +169,7 @@ mod tests {
     #[test] fn out_of_range_values_warn_and_keep_default() { let (c, w) = parse("bateria_baixa = 100\nduracao_ms = 100\nintervalo_bateria_min = 0\n"); assert_eq!(c, Config::default()); assert_eq!(w.len(), 3); }
     #[test] fn duration_and_interval_units() { let (c, _) = parse("duracao_critica_ms = 5000\nintervalo_bateria_min = 30\n"); assert_eq!(c.duration_critical, ms(5000)); assert_eq!(c.legacy_battery_interval, Duration::from_secs(30 * 60)); }
     #[test] fn line_without_equals_warns() { assert_eq!(parse("bateria_baixa 20\n").1.len(), 1); }
-    #[test] fn font_path_and_empty_font() { assert_eq!(parse("fonte = /x/y.ttf\n").0.font, Some(PathBuf::from("/x/y.ttf"))); assert_eq!(parse("fonte =\n").0.font, None); }
+    #[test] fn font_key_is_obsolete_and_warns() { let (c, w) = parse("fonte = /x.ttf\n"); assert_eq!(c, Config::default()); assert_eq!(w.len(), 1); assert!(w[0].contains("obsoleta"), "{w:?}"); assert!(w[0].contains("linha 1")); }
     #[test] fn config_path_prefers_absolute_xdg() { assert_eq!(path_from(Some("/x/cfg".into()), Some("/h".into())), PathBuf::from("/x/cfg/logi-osd/config")); }
     #[test] fn config_path_falls_back_to_home() { assert_eq!(path_from(Some("rel".into()), Some("/h".into())), PathBuf::from("/h/.config/logi-osd/config")); assert_eq!(path_from(Some("".into()), Some("/h".into())), PathBuf::from("/h/.config/logi-osd/config")); }
 }

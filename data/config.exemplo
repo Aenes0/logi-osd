@@ -12,10 +12,15 @@
 # se não for, o valor é descartado e vale o padrão. Mostra o aviso vermelho.
 # bateria_critica = 5
 
-# Tempo que o aviso fica na tela, em milissegundos. Faixa: 200 a 20000.
+# Os avisos são mostrados pelo daemon de notificações. A bateria baixa e a crítica viram
+# cartões, que ficam o tempo do nível no daemon (atenção e crítico); as durações abaixo valem
+# só para as pílulas.
+
+# Tempo que a pílula fica na tela, em milissegundos. Faixa: 200 a 20000.
 # duracao_ms = 1500
 
-# Tempo do aviso de bateria crítica, em milissegundos. Faixa: 200 a 20000.
+# Tempo da pílula com duração crítica, em milissegundos. Faixa: 200 a 20000.
+# (Hoje nenhuma pílula usa: o único aviso crítico, a bateria a 5%, é cartão.)
 # duracao_critica_ms = 4000
 
 # Intervalo de leitura da bateria, em minutos, para dispositivos que não avisam sozinhos
@@ -26,8 +31,3 @@
 # O seletor de emoji é um projeto separado; enquanto ele não existir, deixe vazio.
 # Exemplo: comando_emoji = gnome-characters
 # comando_emoji =
-
-# Arquivo de fonte (.ttf) usado no texto do aviso. Vazio = fonte do sistema
-# (OpenSans ou DejaVuSans em /usr/share/fonts).
-# Exemplo: fonte = /usr/share/fonts/TTF/DejaVuSans.ttf
-# fonte =
